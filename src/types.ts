@@ -1,0 +1,125 @@
+export type LanguageCode = "en" | "de" | "es" | "fr";
+
+export type Direction = "en-de" | "de-en";
+
+export type CEFRLevel = "A1" | "A2" | "B1" | "B2" | "C1";
+
+export type TopicId =
+  | "all"
+  | "everyday"
+  | "work"
+  | "university"
+  | "travel"
+  | "food"
+  | "shopping"
+  | "housing"
+  | "relationships"
+  | "technology"
+  | "health"
+  | "social"
+  | "opinions"
+  | "common_expressions"
+  | "grammar";
+
+export type Rating = "again" | "hard" | "good" | "easy";
+
+export type SentenceStatus = "new" | "learning" | "review" | "mastered";
+
+export type SentenceRegister = "informal" | "neutral" | "formal";
+
+export interface WordMeaning {
+  word: string;
+  meaning: string;
+  note?: string;
+}
+
+export interface SentenceExplanation {
+  literal?: string;
+  grammarNote: string;
+  wordOrderRule?: string;
+  wordByWord?: WordMeaning[];
+  breakdown: string[];
+  alternatives: string[];
+  register?: SentenceRegister;
+}
+
+export interface SentenceItem {
+  id: string;
+  sourceText: string;
+  targetText: string;
+  sourceLang: LanguageCode;
+  targetLang: LanguageCode;
+  level: CEFRLevel;
+  topic: TopicId;
+  topicLabel: string;
+  subtopic?: string;
+  grammarTags: string[];
+  vocabularyTags: string[];
+  difficulty: number; // 1 - 5
+  register: SentenceRegister;
+  explanation: SentenceExplanation;
+  audioPhonetic?: string;
+}
+
+export interface UserSentenceProgress {
+  sentenceId: string;
+  attempts: number;
+  correctCount: number;
+  lastReviewedAt: number; // unix timestamp in ms
+  nextReviewAt: number; // unix timestamp in ms
+  easeFactor: number; // default 2.5
+  intervalDays: number;
+  consecutiveCorrect: number;
+  status: SentenceStatus;
+  lastRating?: Rating;
+}
+
+export interface ReviewLog {
+  sentenceId: string;
+  timestamp: number;
+  rating: Rating;
+  direction: Direction;
+  timeSpentMs: number;
+  typedAnswer?: string;
+  isCorrect?: boolean;
+}
+
+export interface UserProgress {
+  totalPracticed: number;
+  ratingCounts: Record<Rating, number>;
+  streakDays: number;
+  longestStreak: number;
+  lastActiveDate: string; // YYYY-MM-DD
+  todayCount: number;
+  todayDate: string; // YYYY-MM-DD
+  sentenceProgress: Record<string, UserSentenceProgress>;
+  history: ReviewLog[];
+}
+
+export interface AppSettings {
+  direction: Direction;
+  level: CEFRLevel;
+  topic: TopicId;
+  typingMode: boolean;
+  themeMode: "dark" | "editorial";
+  audioSpeed: number;
+  autoSpeak: boolean;
+  selectedVoiceName?: string;
+  dailyGoal: number; // 10, 20, 30, 50
+}
+
+export interface LanguageInfo {
+  code: LanguageCode;
+  name: string;
+  nativeName: string;
+  flag: string;
+  voiceLangCode: string;
+}
+
+export interface TypingEvaluationResult {
+  isCorrect: boolean;
+  verdict: "exact" | "alternative" | "minor_typo" | "grammar_error" | "incorrect";
+  shortFeedback: string;
+  diffAnalysis?: string;
+  breakdown?: string;
+}

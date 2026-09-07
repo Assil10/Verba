@@ -1,0 +1,6 @@
+{
+  "name": "Verba — Sentence Language Practice",
+  "description": "A minimalist, high-focus language learning tool built on See-Think-Reveal spaced repetition for German and English.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

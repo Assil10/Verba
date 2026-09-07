@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-display: 'Syne', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-arial-black: 'Arial Black', 'Impact', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    /* High-contrast minimalist light palette */
+    --bg-main: #FFFFFF;
+    --bg-surface: #FFFFFF;
+    --bg-surface-elevated: #F7F7F7;
+    --border-color: #E5E5E5;
+    --border-dark: #000000;
+    --border-highlight: #000000;
+    --text-high: #000000;
+    --text-med: #222222;
+    --text-low: #666666;
+    --accent: #000000;
+    --accent-glow: rgba(0, 0, 0, 0.05);
+    
+    --pill-again: #000000;
+    --pill-hard: #000000;
+    --pill-good: #000000;
+    --pill-easy: #000000;
+  }
+
+  [data-theme="editorial"] {
+    --bg-main: #FFFFFF;
+    --bg-surface: #FFFFFF;
+    --bg-surface-elevated: #F7F7F7;
+    --border-color: #E5E5E5;
+    --border-dark: #000000;
+    --border-highlight: #000000;
+    --text-high: #000000;
+    --text-med: #222222;
+    --text-low: #666666;
+    --accent: #000000;
+    --accent-glow: rgba(0, 0, 0, 0.05);
+  }
+
+  .dark, [data-theme="dark"] {
+    /* Stark luxury night mode palette */
+    --bg-main: #0A0A0A;
+    --bg-surface: #121212;
+    --bg-surface-elevated: #1B1B1B;
+    --border-color: #262626;
+    --border-dark: #FFFFFF;
+    --border-highlight: #FFFFFF;
+    --text-high: #FFFFFF;
+    --text-med: #E0E0E0;
+    --text-low: #888888;
+    --accent: #FFFFFF;
+    --accent-glow: rgba(255, 255, 255, 0.08);
+
+    --pill-again: #FFFFFF;
+    --pill-hard: #FFFFFF;
+    --pill-good: #FFFFFF;
+    --pill-easy: #FFFFFF;
+  }
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-high);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography Utility Classes */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-sans-main {
+  font-family: var(--font-sans);
+}
+
+.font-mono-code {
+  font-family: var(--font-mono);
+}
+
+.font-arial-black {
+  font-family: var(--font-arial-black);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+/* Subtle transitions */
+.transition-subtle {
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Custom scrollbar for minimalist UI */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4D4D4;
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #333333;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #000000;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #FFFFFF;
+}
