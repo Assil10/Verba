@@ -45,6 +45,61 @@ export interface WordMeaning {
   note?: string;
 }
 
+export interface SentenceStructureChunk {
+  text: string;
+  role: string;
+  explanation: string;
+}
+
+export interface KeyGrammarPoint {
+  title: string;
+  pattern: string;
+  explanation: string;
+  example: string;
+}
+
+export interface DifficultWord {
+  word: string;
+  meaning: string;
+  partOfSpeech: string;
+  grammar: string;
+  relatedWords?: string[];
+}
+
+export interface DetailedWordBreakdown {
+  word: string;
+  lemma?: string;
+  meaning: string;
+  partOfSpeech: string;
+  grammaticalRole: string;
+  morphology?: string;
+  explanation?: string;
+}
+
+export interface ReusablePattern {
+  pattern: string;
+  explanation: string;
+}
+
+export type GrammarDepthLevel = 1 | 2 | 3 | 4 | 5;
+
+export interface GrammarAnalysis {
+  depthLevel: GrammarDepthLevel;
+  depthLabel: "Micro" | "Short" | "Standard" | "Deep" | "Advanced";
+  principle: string;
+  structure: SentenceStructureChunk[];
+  keyGrammar: KeyGrammarPoint[];
+  difficultWords: DifficultWord[];
+  wordBreakdown: DetailedWordBreakdown[];
+  wordOrder: {
+    explanation: string;
+  };
+  literalMeaning?: string;
+  naturalVsLiteralNote?: string;
+  reusablePatterns: ReusablePattern[];
+  learningNote?: string;
+}
+
 export interface SentenceExplanation {
   literal?: string;
   grammarNote: string;
@@ -53,6 +108,8 @@ export interface SentenceExplanation {
   breakdown: string[];
   alternatives: string[];
   register?: SentenceRegister;
+  cefrJustification?: string;
+  grammarAnalysis?: GrammarAnalysis;
 }
 
 export interface SentenceItem {
@@ -70,6 +127,7 @@ export interface SentenceItem {
   difficulty: number; // 1 - 5
   register: SentenceRegister;
   explanation: SentenceExplanation;
+  grammarAnalysis?: GrammarAnalysis;
   audioPhonetic?: string;
 }
 

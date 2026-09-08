@@ -65,7 +65,7 @@ app.get("/api/health", (req, res) => {
 // AI Sentence Explanation Endpoint
 app.post("/api/explain", rateLimitMiddleware, async (req, res) => {
   try {
-    const { sentence, translation, sourceLang, targetLang, level, query } = req.body;
+    const { sentence, translation, sourceLang, targetLang, level, query, grammarAnalysis } = req.body;
 
     if (!sentence || !translation || typeof sentence !== "string" || typeof translation !== "string") {
       return res.status(400).json({ error: "Missing or invalid sentence/translation parameters." });
@@ -93,26 +93,36 @@ app.post("/api/explain", rateLimitMiddleware, async (req, res) => {
         ? "The learner is advanced (C1). Provide precise linguistic terminology (e.g. Nominalstil, Funktionsverbgefüge, genitive rection) without fluff."
         : "The learner is intermediate (B1-B2). Focus on sentence bracket (Satzklammer), connector usage (weil/obwohl/wenn), and natural idiomatic collocations.";
 
-    const prompt = `You are a succinct, world-class linguist explaining a sentence for a language learner.
+    const baselineInfo = grammarAnalysis
+      ? `\nSentence-Specific Context:
+- Principle: ${grammarAnalysis.principle || "Standard grammar"}
+- Key grammar points: ${grammarAnalysis.keyGrammar?.map((k: any) => k.title).join(", ") || "General structure"}
+- Word order: ${grammarAnalysis.wordOrder?.explanation || "V2 rule"}`
+      : "";
+
+    const prompt = `You are a succinct, world-class German linguist and native pedagogue explaining a sentence for a language learner.
 ${levelGuidance}
 
 Sentence (${sourceLang || "German"}): "${sentence}"
 Reference translation (${targetLang || "English"}): "${translation}"
 Learner CEFR Level: ${cefrLevel}
+${baselineInfo}
 ${query ? `Learner Question: "${query}"` : ""}
 
 Provide a crisp, structured explanation in markdown. Avoid conversational pleasantries:
-### Core Nuance
-1-2 direct sentences on what makes this phrasing natural.
+### 1. Pedagogical Nuance & Tone
+1-2 direct sentences on what makes this phrasing natural in German context (register, nuance, pragmatics).
 
-### Key Grammar & Word Order
-- Bullet points on verb position (V2 rule, subordinate verb-final, separable prefix) and case mechanics (Dativ/Akkusativ/Genitiv).
+### 2. Deep Grammar & Potential Pitfalls
+- Specific grammatical reasons for case choices, endings, or verb placements in this sentence.
+- The most common mistake non-native learners (especially English speakers) make with this specific construction.
 
-### Vocabulary & Register
-- Key words, idioms, or formal/informal register notes.
+### 3. Native Alternatives & Register Shifts
+- Everyday spoken alternative: how Germans phrase this in casual conversation.
+- Formal or written alternative (if applicable).
 
-### Natural Alternatives
-- 1-2 everyday alternative ways native speakers express the same thought.`;
+### 4. Mental Model / Mnemonic
+- One clear rule of thumb or mental shortcut to never get this pattern wrong.`;
 
     // Timeout safety race: max 7 seconds
     const timeoutPromise = new Promise((_, reject) =>

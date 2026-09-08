@@ -14,7 +14,9 @@ import { AppSettings, Rating, SentenceItem, TypingEvaluationResult, UserSentence
 import { speakText, playSubtleClick } from "../utils/sound";
 import { evaluateUserTyping } from "../services/typingEvaluator";
 import { getFSRSIntervalsPreview } from "../services/srsEngine";
+import { getSentenceGrammarAnalysis } from "../services/grammarAnalyzer";
 import { ScrambleText } from "./ScrambleText";
+import { GrammarBreakdownDrawer } from "./GrammarBreakdownDrawer";
 
 interface PracticeCardProps {
   sentence: SentenceItem;
@@ -115,6 +117,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
   const handleFetchAiExplanation = async () => {
     setAiLoading(true);
     try {
+      const currentAnalysis = getSentenceGrammarAnalysis(sentence);
       const res = await fetch("/api/explain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -124,6 +127,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
           sourceLang: promptLangName,
           targetLang: answerLangName,
           level: sentence.level,
+          grammarAnalysis: currentAnalysis,
         }),
       });
       const data = await res.json();
@@ -554,113 +558,12 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
                 </button>
 
                 {showUnderstand && (
-                  <div className="mt-3 p-4 sm:p-5 rounded-2xl bg-neutral-50 dark:bg-[#181818] border border-black/10 dark:border-neutral-800 text-xs text-black dark:text-white space-y-4 animate-in fade-in duration-150">
-                    {/* Grammar Rule */}
-                    <div>
-                      <div className="text-[10px] font-mono-code font-bold text-neutral-400 uppercase tracking-widest mb-1">
-                        GRAMMAR PRINCIPLE
-                      </div>
-                      <p className="text-black dark:text-white font-semibold leading-relaxed text-sm">
-                        {sentence.explanation.grammarNote}
-                      </p>
-                    </div>
-
-                    {/* Word Order Rule */}
-                    {sentence.explanation.wordOrderRule && (
-                      <div>
-                        <div className="text-[10px] font-mono-code font-bold text-neutral-400 uppercase tracking-widest mb-1">
-                          SYNTAX & WORD ORDER
-                        </div>
-                        <p className="text-neutral-800 dark:text-neutral-300 leading-relaxed font-mono-code text-xs">
-                          {sentence.explanation.wordOrderRule}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Word-by-Word Breakdown */}
-                    {sentence.explanation.wordByWord && sentence.explanation.wordByWord.length > 0 && (
-                      <div>
-                        <div className="text-[10px] font-mono-code font-bold text-neutral-400 uppercase tracking-widest mb-2">
-                          WORD BY WORD
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                          {sentence.explanation.wordByWord.map((item, idx) => (
-                            <div
-                              key={idx}
-                              className="p-2 rounded-xl bg-white dark:bg-[#202020] border border-neutral-200 dark:border-neutral-700 font-mono-code text-xs flex items-center justify-between"
-                            >
-                              <span className="text-black dark:text-white font-black">{item.word}</span>
-                              <span className="text-neutral-600 dark:text-neutral-400 font-medium">{item.meaning}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Literal Translation */}
-                    {sentence.explanation.literal && (
-                      <div>
-                        <div className="text-[10px] font-mono-code font-bold text-neutral-400 uppercase tracking-widest mb-1">
-                          LITERAL GLOSS
-                        </div>
-                        <p className="text-neutral-700 dark:text-neutral-300 italic font-mono-code text-xs">
-                          "{sentence.explanation.literal}"
-                        </p>
-                      </div>
-                    )}
-
-                    {/* CEFR Level Justification */}
-                    {sentence.explanation.cefrJustification && (
-                      <div>
-                        <div className="text-[10px] font-mono-code font-bold text-neutral-400 uppercase tracking-widest mb-1">
-                          LEVEL {sentence.level} REASONING
-                        </div>
-                        <p className="text-neutral-700 dark:text-neutral-300 font-mono-code text-xs">
-                          {sentence.explanation.cefrJustification}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* AI Deep Grammar Explanation Button */}
-                    <div className="pt-2 border-t border-neutral-200 dark:border-neutral-700">
-                      {!aiExplanation && !aiLoading && (
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                          <span className="text-xs text-neutral-600 dark:text-neutral-400 font-medium">
-                            Need deeper grammatical nuance or preposition analysis?
-                          </span>
-                          <button
-                            id="ask-ai-deep-explanation-btn"
-                            onClick={handleFetchAiExplanation}
-                            className="px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer min-h-[40px]"
-                            title="Explain with AI (E)"
-                          >
-                            <Sparkles className="w-3.5 h-3.5" />
-                            <span>EXPLAIN WITH AI</span>
-                            <kbd className="inline-flex items-center justify-center min-w-[18px] h-4.5 px-1.5 text-[10px] font-mono-code font-bold uppercase rounded border bg-neutral-900 dark:bg-neutral-100 text-white dark:text-black border-neutral-700 dark:border-neutral-300">
-                              E
-                            </kbd>
-                          </button>
-                        </div>
-                      )}
-
-                      {aiLoading && (
-                        <div className="flex items-center gap-2 py-2 text-black dark:text-white font-mono-code text-xs font-bold">
-                          <div className="w-4 h-4 rounded-full border-2 border-black dark:border-white border-t-transparent animate-spin" />
-                          <span>Generating CEFR-{sentence.level} linguistic analysis...</span>
-                        </div>
-                      )}
-
-                      {aiExplanation && (
-                        <div className="mt-2 p-4 rounded-xl bg-white dark:bg-[#202020] border border-neutral-200 dark:border-neutral-700 text-xs text-black dark:text-white whitespace-pre-line leading-relaxed">
-                          <div className="flex items-center gap-1.5 text-black dark:text-white font-mono-code text-[11px] uppercase font-bold mb-2">
-                            <Sparkles className="w-3.5 h-3.5" />
-                            <span>AI LINGUISTIC ANALYSIS</span>
-                          </div>
-                          {aiExplanation}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <GrammarBreakdownDrawer
+                    sentence={sentence}
+                    aiExplanation={aiExplanation}
+                    aiLoading={aiLoading}
+                    onFetchAiExplanation={handleFetchAiExplanation}
+                  />
                 )}
               </div>
             </div>
