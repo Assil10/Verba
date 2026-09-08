@@ -23,9 +23,21 @@ export type TopicId =
 
 export type Rating = "again" | "hard" | "good" | "easy";
 
-export type SentenceStatus = "new" | "learning" | "review" | "mastered";
+export type SentenceStatus = "new" | "learning" | "review" | "mastered" | "relearning";
 
 export type SentenceRegister = "informal" | "neutral" | "formal";
+
+export interface FSRSCardData {
+  due: number; // unix timestamp in ms
+  stability: number;
+  difficulty: number;
+  elapsed_days: number;
+  scheduled_days: number;
+  reps: number;
+  lapses: number;
+  state: number; // 0: New, 1: Learning, 2: Review, 3: Relearning
+  last_review?: number; // unix timestamp in ms
+}
 
 export interface WordMeaning {
   word: string;
@@ -67,11 +79,22 @@ export interface UserSentenceProgress {
   correctCount: number;
   lastReviewedAt: number; // unix timestamp in ms
   nextReviewAt: number; // unix timestamp in ms
-  easeFactor: number; // default 2.5
+  easeFactor: number; // retained for backwards compatibility
   intervalDays: number;
   consecutiveCorrect: number;
   status: SentenceStatus;
   lastRating?: Rating;
+
+  // Native FSRS fields
+  stability?: number;
+  difficulty?: number;
+  due?: number; // unix timestamp in ms
+  scheduled_days?: number;
+  reps?: number;
+  lapses?: number;
+  state?: number; // 0: New, 1: Learning, 2: Review, 3: Relearning
+  last_review?: number; // unix timestamp in ms
+  fsrs?: FSRSCardData;
 }
 
 export interface ReviewLog {
@@ -85,6 +108,7 @@ export interface ReviewLog {
 }
 
 export interface UserProgress {
+  version?: number; // 3 for FSRS
   totalPracticed: number;
   ratingCounts: Record<Rating, number>;
   streakDays: number;

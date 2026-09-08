@@ -10,13 +10,15 @@ import {
   RotateCcw,
   ArrowRight,
 } from "lucide-react";
-import { AppSettings, Rating, SentenceItem, TypingEvaluationResult } from "../types";
+import { AppSettings, Rating, SentenceItem, TypingEvaluationResult, UserSentenceProgress } from "../types";
 import { speakText, playSubtleClick } from "../utils/sound";
 import { evaluateUserTyping } from "../services/typingEvaluator";
+import { getFSRSIntervalsPreview } from "../services/srsEngine";
 import { ScrambleText } from "./ScrambleText";
 
 interface PracticeCardProps {
   sentence: SentenceItem;
+  cardProgress?: UserSentenceProgress;
   settings: AppSettings;
   onRate: (rating: Rating, timeSpentMs: number, typedAnswer?: string, isCorrect?: boolean) => void;
   onFlipDirection: () => void;
@@ -27,6 +29,7 @@ interface PracticeCardProps {
 
 export const PracticeCard: React.FC<PracticeCardProps> = ({
   sentence,
+  cardProgress,
   settings,
   onRate,
   onFlipDirection,
@@ -44,6 +47,10 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
 
   const startTimeRef = useRef<number>(Date.now());
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const fsrsIntervals = React.useMemo(() => {
+    return getFSRSIntervalsPreview(cardProgress);
+  }, [cardProgress, sentence.id]);
 
   const isEnToDe = settings.direction === "en-de";
   const promptText = isEnToDe ? sentence.targetText : sentence.sourceText;
@@ -72,6 +79,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
     if (isRevealed) return;
     playSubtleClick("reveal");
     setIsRevealed(true);
+    inputRef.current?.blur();
 
     if (settings.autoSpeak) {
       speakText(answerText, answerVoiceCode, settings.audioSpeed, settings.selectedVoiceName);
@@ -133,58 +141,86 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (document.activeElement?.tagName === "INPUT" && e.key !== "Enter") {
+      // If user is currently typing in an input or textarea, only allow Enter to submit or Escape to unfocus
+      if (
+        (document.activeElement?.tagName === "INPUT" ||
+          document.activeElement?.tagName === "TEXTAREA") &&
+        e.key !== "Enter" &&
+        e.key !== "Escape"
+      ) {
         return;
       }
 
+      // Normalize key to lower case to handle uppercase/lowercase / Shift / CapsLock correctly
+      const key = e.key.toLowerCase();
+      const isSpace = e.code === "Space" || e.key === " ";
+
       if (!isRevealed) {
-        if (e.code === "Space" || e.key === "Enter") {
+        // Space or Enter: Reveal card
+        if (isSpace || e.key === "Enter") {
           e.preventDefault();
           handleReveal();
-        } else if (e.key === "n" || e.key === "N") {
+        } else if (key === "n") {
           e.preventDefault();
           onNextCard?.();
-        } else if (e.key === "f" || e.key === "F") {
+        } else if (key === "t") {
+          e.preventDefault();
+          onToggleTyping?.();
+        } else if (key === "u") {
+          e.preventDefault();
+          // Toggle grammar/linguistic breakdown (auto-reveals if hidden)
+          handleReveal();
+          setShowUnderstand((prev) => !prev);
+        } else if (key === "e") {
+          e.preventDefault();
+          // Explain with AI (auto-reveals card and requests AI)
+          handleReveal();
+          setShowUnderstand(true);
+          handleFetchAiExplanation();
+        } else if (key === "f") {
           e.preventDefault();
           onFlipDirection();
-        } else if (e.key === "p" || e.key === "P") {
+        } else if (key === "p") {
           e.preventDefault();
           speakText(promptText, promptVoiceCode, settings.audioSpeed, settings.selectedVoiceName);
-        } else if (e.key === "t" || e.key === "T") {
-          e.preventDefault();
-          onToggleTyping?.();
         }
       } else {
-        if (e.key === "1") {
+        // When revealed:
+        // 1 -> Again, 2 -> Hard, 3 -> Good, 4 -> Easy
+        if (key === "1") {
           e.preventDefault();
           handleRate("again");
-        } else if (e.key === "2") {
+        } else if (key === "2") {
           e.preventDefault();
           handleRate("hard");
-        } else if (e.key === "3") {
+        } else if (key === "3") {
           e.preventDefault();
           handleRate("good");
-        } else if (e.key === "4") {
+        } else if (key === "4") {
           e.preventDefault();
           handleRate("easy");
-        } else if (e.key === "n" || e.key === "N") {
-          e.preventDefault();
-          onNextCard?.();
-        } else if (e.code === "Space") {
+        } else if (isSpace) {
           e.preventDefault();
           handleToggleFlip();
-        } else if (e.key === "u" || e.key === "U") {
+        } else if (key === "n") {
           e.preventDefault();
-          setShowUnderstand((prev) => !prev);
-        } else if (e.key === "p" || e.key === "P") {
-          e.preventDefault();
-          speakText(answerText, answerVoiceCode, settings.audioSpeed, settings.selectedVoiceName);
-        } else if (e.key === "f" || e.key === "F") {
-          e.preventDefault();
-          onFlipDirection();
-        } else if (e.key === "t" || e.key === "T") {
+          onNextCard?.();
+        } else if (key === "t") {
           e.preventDefault();
           onToggleTyping?.();
+        } else if (key === "u") {
+          e.preventDefault();
+          setShowUnderstand((prev) => !prev);
+        } else if (key === "e") {
+          e.preventDefault();
+          setShowUnderstand(true);
+          handleFetchAiExplanation();
+        } else if (key === "p") {
+          e.preventDefault();
+          speakText(answerText, answerVoiceCode, settings.audioSpeed, settings.selectedVoiceName);
+        } else if (key === "f") {
+          e.preventDefault();
+          onFlipDirection();
         } else if (e.key === "Escape") {
           e.preventDefault();
           setShowUnderstand(false);
@@ -198,11 +234,20 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
     isRevealed,
     answerText,
     promptText,
+    sentence.id,
+    sentence.sourceText,
+    sentence.targetText,
+    sentence.level,
+    aiLoading,
     settings.direction,
     settings.audioSpeed,
     settings.selectedVoiceName,
     onToggleTyping,
     onNextCard,
+    handleReveal,
+    handleRate,
+    handleToggleFlip,
+    handleFetchAiExplanation,
   ]);
 
   return (
@@ -430,7 +475,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
                 className="w-full max-w-sm mx-auto py-3.5 sm:py-4 px-8 bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:bg-neutral-950 dark:active:bg-neutral-300 rounded-full font-arial-black text-xs sm:text-sm tracking-wider flex items-center justify-center gap-3 border border-black dark:border-white transition-all cursor-pointer min-h-[50px]"
               >
                 <RotateCcw className="w-4 h-4 stroke-[2.5]" />
-                <span className="uppercase font-black tracking-widest text-white dark:text-black">FLIP CARD</span>
+                <span className="uppercase font-black tracking-widest text-white dark:text-black">REVEAL</span>
                 <kbd className="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-mono-code font-bold bg-white dark:bg-black text-black dark:text-white rounded tracking-widest border border-neutral-300 dark:border-neutral-700">
                   SPACE
                 </kbd>
@@ -453,7 +498,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
                   >
                     <span className="text-xs sm:text-sm font-arial-black tracking-wider uppercase">AGAIN</span>
                     <span className="text-[10px] font-mono-code font-bold text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-300 dark:group-hover:text-neutral-700 mt-0.5">
-                      1 · &lt;1m
+                      1 · {fsrsIntervals.again}
                     </span>
                   </button>
 
@@ -464,7 +509,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
                   >
                     <span className="text-xs sm:text-sm font-arial-black tracking-wider uppercase">HARD</span>
                     <span className="text-[10px] font-mono-code font-bold text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-300 dark:group-hover:text-neutral-700 mt-0.5">
-                      2 · 10m
+                      2 · {fsrsIntervals.hard}
                     </span>
                   </button>
 
@@ -475,7 +520,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
                   >
                     <span className="text-xs sm:text-sm font-arial-black tracking-wider uppercase">GOOD</span>
                     <span className="text-[10px] font-mono-code font-bold text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-300 dark:group-hover:text-neutral-700 mt-0.5">
-                      3 · 1d
+                      3 · {fsrsIntervals.good}
                     </span>
                   </button>
 
@@ -486,7 +531,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
                   >
                     <span className="text-xs sm:text-sm font-arial-black tracking-wider uppercase">EASY</span>
                     <span className="text-[10px] font-mono-code font-bold text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-300 dark:group-hover:text-neutral-700 mt-0.5">
-                      4 · 4d
+                      4 · {fsrsIntervals.easy}
                     </span>
                   </button>
                 </div>
@@ -501,7 +546,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
                 >
                   <span className="flex items-center gap-2 tracking-wider text-[11px] uppercase">
                     <Sparkles className="w-3.5 h-3.5 stroke-[2.2]" />
-                    <span>{showUnderstand ? "− HIDE LINGUISTIC BREAKDOWN" : "+ UNDERSTAND THIS SENTENCE"}</span>
+                    <span>{showUnderstand ? "− HIDE GRAMMAR & BREAKDOWN" : "+ GRAMMAR & BREAKDOWN"}</span>
                   </span>
                   <kbd className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-mono-code font-bold uppercase rounded border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
                     U
@@ -587,9 +632,13 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
                             id="ask-ai-deep-explanation-btn"
                             onClick={handleFetchAiExplanation}
                             className="px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer min-h-[40px]"
+                            title="Explain with AI (E)"
                           >
                             <Sparkles className="w-3.5 h-3.5" />
                             <span>EXPLAIN WITH AI</span>
+                            <kbd className="inline-flex items-center justify-center min-w-[18px] h-4.5 px-1.5 text-[10px] font-mono-code font-bold uppercase rounded border bg-neutral-900 dark:bg-neutral-100 text-white dark:text-black border-neutral-700 dark:border-neutral-300">
+                              E
+                            </kbd>
                           </button>
                         </div>
                       )}

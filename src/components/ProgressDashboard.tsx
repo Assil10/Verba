@@ -61,7 +61,12 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
   ).length;
 
   const weakCount = allProgressItems.filter(
-    (p) => p.status === "learning" || p.lastRating === "again" || (p.easeFactor < 2.0 && p.attempts >= 1)
+    (p) =>
+      p.status === "learning" ||
+      p.status === "relearning" ||
+      p.lastRating === "again" ||
+      (p.difficulty !== undefined && p.difficulty >= 7.5) ||
+      (p.easeFactor < 2.0 && p.attempts >= 1)
   ).length;
 
   // Daily goal calculation

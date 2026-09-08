@@ -48,15 +48,19 @@ export function selectNextSentence(
     const p = progress.sentenceProgress[sentence.id];
     if (!p) {
       unpracticedNew.push(sentence);
-    } else if (
-      p.status === "learning" ||
-      p.nextReviewAt <= now ||
-      p.lastRating === "again" ||
-      p.lastRating === "hard"
-    ) {
-      dueOrWeak.push(sentence);
     } else {
-      masteredOrFuture.push(sentence);
+      const dueTime = p.fsrs?.due ?? p.due ?? p.nextReviewAt ?? 0;
+      if (
+        p.status === "learning" ||
+        p.status === "relearning" ||
+        dueTime <= now ||
+        p.lastRating === "again" ||
+        (p.lapses !== undefined && p.lapses > 0 && p.consecutiveCorrect === 0)
+      ) {
+        dueOrWeak.push(sentence);
+      } else {
+        masteredOrFuture.push(sentence);
+      }
     }
   }
 
@@ -69,8 +73,8 @@ export function selectNextSentence(
   if (rand < 0.7 && dueOrWeak.length > 0) {
     // Pick the most overdue or weakest
     dueOrWeak.sort((a, b) => {
-      const pa = progress.sentenceProgress[a.id]?.nextReviewAt || 0;
-      const pb = progress.sentenceProgress[b.id]?.nextReviewAt || 0;
+      const pa = progress.sentenceProgress[a.id]?.fsrs?.due ?? progress.sentenceProgress[a.id]?.nextReviewAt ?? 0;
+      const pb = progress.sentenceProgress[b.id]?.fsrs?.due ?? progress.sentenceProgress[b.id]?.nextReviewAt ?? 0;
       return pa - pb;
     });
     return dueOrWeak[0];

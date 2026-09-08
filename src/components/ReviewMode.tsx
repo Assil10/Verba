@@ -242,6 +242,7 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
 
       <PracticeCard
         sentence={currentSentence}
+        cardProgress={progress.sentenceProgress[currentSentence.id]}
         settings={settings}
         onRate={handleRate}
         onFlipDirection={onFlipDirection}

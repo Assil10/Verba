@@ -35,7 +35,7 @@ export const Footer: React.FC<FooterProps> = () => {
 
   return (
     <>
-      <footer className="w-full bg-black border-t border-neutral-900 py-10 sm:py-14 px-4 sm:px-8 mt-auto text-neutral-400 font-mono-code">
+      <footer className="w-full bg-black dark:bg-white border-t border-neutral-900 dark:border-neutral-200 py-10 sm:py-14 px-4 sm:px-8 mt-auto text-neutral-400 dark:text-neutral-600 font-mono-code transition-colors">
         <div className="max-w-5xl mx-auto flex flex-col items-center justify-center text-center gap-5 sm:gap-6">
           
           {/* Primary Terminal Links Row */}
@@ -47,7 +47,7 @@ export const Footer: React.FC<FooterProps> = () => {
             <button
               id="footer-contact-btn"
               onClick={() => setActiveModal("contact")}
-              className="py-1 px-1.5 text-white hover:text-neutral-300 transition-colors cursor-pointer flex items-center gap-1.5 focus:outline-none focus:underline"
+              className="py-1 px-1.5 text-white dark:text-black hover:text-neutral-300 dark:hover:text-neutral-600 transition-colors cursor-pointer flex items-center gap-1.5 focus:outline-none focus:underline"
             >
               <span>// CONTACT</span>
             </button>
@@ -58,7 +58,7 @@ export const Footer: React.FC<FooterProps> = () => {
               href="https://instagram.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="py-1 px-1.5 text-neutral-400 hover:text-white transition-colors cursor-pointer focus:outline-none focus:underline"
+              className="py-1 px-1.5 text-neutral-400 dark:text-neutral-600 hover:text-white dark:hover:text-black transition-colors cursor-pointer focus:outline-none focus:underline"
               title="Visit Verba on Instagram"
             >
               INSTAGRAM
@@ -70,7 +70,7 @@ export const Footer: React.FC<FooterProps> = () => {
               href="https://tiktok.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="py-1 px-1.5 text-neutral-400 hover:text-white transition-colors cursor-pointer focus:outline-none focus:underline"
+              className="py-1 px-1.5 text-neutral-400 dark:text-neutral-600 hover:text-white dark:hover:text-black transition-colors cursor-pointer focus:outline-none focus:underline"
               title="Visit Verba on TikTok"
             >
               TIKTOK
@@ -80,7 +80,7 @@ export const Footer: React.FC<FooterProps> = () => {
             <button
               id="footer-impressum-btn"
               onClick={() => setActiveModal("impressum")}
-              className="py-1 px-1.5 text-neutral-400 hover:text-white transition-colors cursor-pointer focus:outline-none focus:underline"
+              className="py-1 px-1.5 text-neutral-400 dark:text-neutral-600 hover:text-white dark:hover:text-black transition-colors cursor-pointer focus:outline-none focus:underline"
             >
               IMPRESSUM
             </button>
@@ -89,7 +89,7 @@ export const Footer: React.FC<FooterProps> = () => {
             <button
               id="footer-terms-btn"
               onClick={() => setActiveModal("terms")}
-              className="py-1 px-1.5 text-neutral-400 hover:text-white transition-colors cursor-pointer focus:outline-none focus:underline"
+              className="py-1 px-1.5 text-neutral-400 dark:text-neutral-600 hover:text-white dark:hover:text-black transition-colors cursor-pointer focus:outline-none focus:underline"
             >
               TERMS
             </button>
@@ -98,14 +98,14 @@ export const Footer: React.FC<FooterProps> = () => {
             <button
               id="footer-privacy-btn"
               onClick={() => setActiveModal("privacy")}
-              className="py-1 px-1.5 text-neutral-400 hover:text-white transition-colors cursor-pointer focus:outline-none focus:underline"
+              className="py-1 px-1.5 text-neutral-400 dark:text-neutral-600 hover:text-white dark:hover:text-black transition-colors cursor-pointer focus:outline-none focus:underline"
             >
               PRIVACY
             </button>
           </nav>
 
           {/* Slogan and Copyright Row */}
-          <div className="pt-1 text-[10px] sm:text-xs tracking-[0.10em] sm:tracking-[0.16em] uppercase text-neutral-500 select-none max-w-xl leading-relaxed">
+          <div className="pt-1 text-[10px] sm:text-xs tracking-[0.10em] sm:tracking-[0.16em] uppercase text-neutral-500 dark:text-neutral-500 select-none max-w-xl leading-relaxed">
             © 2026 VERBA · EDUCATION SHOULDN&apos;T BE EXPENSIVE
           </div>
         </div>

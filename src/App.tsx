@@ -187,6 +187,7 @@ export default function App() {
           <PracticeCard
             key={`${currentSentence.id}-${settings.direction}`}
             sentence={currentSentence}
+            cardProgress={progress.sentenceProgress[currentSentence.id]}
             settings={settings}
             onRate={handleRateSentence}
             onFlipDirection={handleFlipDirection}
