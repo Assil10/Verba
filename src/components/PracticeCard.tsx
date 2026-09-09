@@ -294,16 +294,16 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
   ]);
 
   return (
-    <div className="w-full flex flex-col items-center justify-center min-h-[calc(100vh-160px)] py-4 sm:py-8 md:py-10 px-2.5 sm:px-6">
+    <div className="w-full flex flex-col items-center justify-center min-h-[calc(100vh-190px)] sm:min-h-[calc(100vh-160px)] py-3 sm:py-8 md:py-10 px-3 sm:px-6">
       <div className="w-full max-w-2xl flex flex-col items-center">
         {/* Fixed min-height stark black & white card container to eliminate height jump when flipped */}
         <section
           id="practice-session-card"
           aria-label="Practice sentence flashcard"
-          className="w-full min-h-[420px] sm:min-h-[480px] md:min-h-[510px] flex flex-col justify-between bg-white dark:bg-[#121212] border-2 border-black dark:border-neutral-200 rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-8 md:p-10 shadow-[0_15px_40px_-15px_rgba(0,0,0,0.08)] dark:shadow-[0_15px_40px_-15px_rgba(0,0,0,0.7)] transition-all duration-200"
+          className="w-full min-h-[360px] sm:min-h-[480px] md:min-h-[510px] flex flex-col justify-between bg-white dark:bg-[#121212] border-2 border-black dark:border-neutral-200 rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 md:p-10 shadow-[0_15px_40px_-15px_rgba(0,0,0,0.08)] dark:shadow-[0_15px_40px_-15px_rgba(0,0,0,0.7)] transition-all duration-200"
         >
           {/* Top Metadata Header */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-3.5 sm:pb-5 border-b border-neutral-200 dark:border-neutral-800">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 sm:pb-5 border-b border-neutral-200 dark:border-neutral-800">
             <div className="flex items-center gap-1.5 sm:gap-2.5">
               <span className="text-[10px] sm:text-[11px] font-mono-code font-bold tracking-widest text-black dark:text-white border border-black dark:border-neutral-300 px-2 sm:px-3 py-0.5 rounded-full bg-white dark:bg-[#181818] uppercase">
                 {isRevealed ? answerLangName : promptLangName}
@@ -313,7 +313,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
                 {sentence.level}
               </span>
               <span className="text-neutral-300 dark:text-neutral-700">·</span>
-              <span className="text-xs font-mono-code text-neutral-600 dark:text-neutral-400 uppercase tracking-wider font-bold truncate max-w-[100px] sm:max-w-none">
+              <span className="text-xs font-mono-code text-neutral-600 dark:text-neutral-400 uppercase tracking-wider font-bold truncate max-w-[140px] sm:max-w-none">
                 {sentence.topicLabel}
               </span>
             </div>
@@ -363,11 +363,11 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
           </div>
 
           {/* Central Body Content Area: Flex-1 centered content */}
-          <div className="flex-1 flex flex-col justify-center py-5 sm:py-8">
+          <div className="flex-1 flex flex-col justify-center py-4 sm:py-8">
             {!isRevealed ? (
               /* FRONT OF CARD: Animated First Sentence with Scramble & Blur & Soundtrack */
               <div>
-                <h1 className="font-arial-black text-2xl sm:text-4xl md:text-5xl text-black dark:text-white tracking-tight leading-[1.14] text-balance select-text break-words">
+                <h1 className="font-arial-black text-[1.65rem] sm:text-4xl md:text-5xl text-black dark:text-white tracking-tight leading-[1.2] text-balance select-text break-words">
                   <ScrambleText
                     text={promptText}
                     triggerKey={`${sentence.id}-${promptText}`}
@@ -615,7 +615,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
         </section>
 
         {/* Footer Shortcut Strip: Standardized shortcut badges (F, P, T, N) with uniform touch targets and responsive flex */}
-        <div className="mt-5 sm:mt-8 flex flex-wrap items-center justify-center sm:justify-between gap-1.5 sm:gap-2.5 w-full px-1 sm:px-4 text-xs font-mono-code font-bold text-black dark:text-white">
+        <div className="mt-3 sm:mt-8 flex flex-wrap items-center justify-center sm:justify-between gap-1.5 sm:gap-2.5 w-full px-1 sm:px-4 text-xs font-mono-code font-bold text-black dark:text-white">
           <button
             onClick={() => {
               stopSpeaking();

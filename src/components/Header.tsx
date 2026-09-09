@@ -68,18 +68,18 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="w-full bg-white dark:bg-[#0A0A0A] border-b border-neutral-200 dark:border-neutral-800 sticky top-0 z-30 transition-colors">
-      <div className="w-full px-3.5 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         {/* Main Header Bar */}
-        <div className="h-15 sm:h-18 md:h-20 flex items-center justify-between gap-2 sm:gap-4 md:gap-6">
+        <div className="h-14 sm:h-18 md:h-20 flex items-center justify-between gap-2 sm:gap-4 md:gap-6">
           {/* Brand Logo & Desktop Navigation */}
-          <div className="flex items-center gap-3 sm:gap-5 lg:gap-8 min-w-0">
+          <div className="flex items-center gap-3 sm:gap-5 lg:gap-8 shrink-0">
             <button
               id="brand-logo-btn"
               onClick={() => onTabChange("practice")}
               className="group flex items-baseline gap-1 text-left focus:outline-none cursor-pointer py-1 select-none shrink-0"
               aria-label="Verba home"
             >
-              <span className="font-arial-black font-black text-xl sm:text-2xl md:text-3xl tracking-[-0.03em] text-black dark:text-white uppercase transition-opacity group-hover:opacity-80">
+              <span className="font-arial-black font-black text-xl sm:text-2xl md:text-3xl tracking-[-0.03em] text-black dark:text-white uppercase transition-opacity group-hover:opacity-80 whitespace-nowrap">
                 Verba
               </span>
               <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white mb-0.5 shrink-0" />
@@ -245,8 +245,8 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
 
-            {/* German Voice Selector Popover */}
-            <div className="relative" ref={voiceRef}>
+            {/* German Voice Selector Popover (Visible on tablet/desktop, managed in Settings on mobile) */}
+            <div className="relative hidden sm:block" ref={voiceRef}>
               <button
                 id="voice-selector-btn"
                 onClick={() => setShowVoicePopover(!showVoicePopover)}
