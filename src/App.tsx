@@ -11,6 +11,7 @@ import { ReviewMode } from "./components/ReviewMode";
 import { ProgressDashboard } from "./components/ProgressDashboard";
 import { SettingsModal } from "./components/SettingsModal";
 import { Footer } from "./components/Footer";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 export default function App() {
   const [settings, setSettings] = useState<AppSettings>(() => storageService.getSettings());
@@ -196,40 +197,42 @@ export default function App() {
 
       {/* Main Single-View Core Loop */}
       <main className="flex-1 flex flex-col items-center justify-center">
-        {currentTab === "practice" && currentSentence && (
-          <PracticeCard
-            key={`${currentSentence.id}-${settings.direction}`}
-            sentence={currentSentence}
-            cardProgress={progress.sentenceProgress[currentSentence.id]}
-            settings={settings}
-            onRate={handleRateSentence}
-            onFlipDirection={handleFlipDirection}
-            onToggleTyping={() => handleUpdateSettings({ typingMode: !settings.typingMode })}
-            onNextCard={handleNextCard}
-            isReviewMode={false}
-          />
-        )}
+        <ErrorBoundary fallbackTitle="Session Error" onReset={() => handleTabChange("practice")}>
+          {currentTab === "practice" && currentSentence && (
+            <PracticeCard
+              key={`${currentSentence.id}-${settings.direction}`}
+              sentence={currentSentence}
+              cardProgress={progress.sentenceProgress[currentSentence.id]}
+              settings={settings}
+              onRate={handleRateSentence}
+              onFlipDirection={handleFlipDirection}
+              onToggleTyping={() => handleUpdateSettings({ typingMode: !settings.typingMode })}
+              onNextCard={handleNextCard}
+              isReviewMode={false}
+            />
+          )}
 
-        {currentTab === "review" && (
-          <ReviewMode
-            allSentences={SENTENCE_DATABASE}
-            progress={progress}
-            settings={settings}
-            onRateSentence={handleReviewRateSentence}
-            onFlipDirection={handleFlipDirection}
-            onBackToPractice={() => handleTabChange("practice")}
-          />
-        )}
+          {currentTab === "review" && (
+            <ReviewMode
+              allSentences={SENTENCE_DATABASE}
+              progress={progress}
+              settings={settings}
+              onRateSentence={handleReviewRateSentence}
+              onFlipDirection={handleFlipDirection}
+              onBackToPractice={() => handleTabChange("practice")}
+            />
+          )}
 
-        {currentTab === "progress" && (
-          <ProgressDashboard
-            progress={progress}
-            settings={settings}
-            allSentences={SENTENCE_DATABASE}
-            onStartPracticing={() => handleTabChange("practice")}
-            onGoToReview={() => handleTabChange("review")}
-          />
-        )}
+          {currentTab === "progress" && (
+            <ProgressDashboard
+              progress={progress}
+              settings={settings}
+              allSentences={SENTENCE_DATABASE}
+              onStartPracticing={() => handleTabChange("practice")}
+              onGoToReview={() => handleTabChange("review")}
+            />
+          )}
+        </ErrorBoundary>
       </main>
 
       {/* Quiet, Minimalist Editorial Footer */}

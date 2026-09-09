@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { ArrowRight, Flame, Target, BookOpen } from "lucide-react";
 import { AppSettings, SentenceItem, UserProgress, UserSentenceProgress } from "../types";
+import { categorizeDueSentences } from "../services/srsEngine";
 
 interface ProgressDashboardProps {
   progress: UserProgress;
@@ -55,6 +56,11 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
   const accuracyRate = Math.round((goodEasyCount / progress.totalPracticed) * 100);
 
   const allProgressItems = Object.values(progress.sentenceProgress) as UserSentenceProgress[];
+
+  const dueInfo = useMemo(() => {
+    return categorizeDueSentences(allSentences, progress.sentenceProgress || {});
+  }, [allSentences, progress.sentenceProgress]);
+  const dueCount = dueInfo.allDue.length;
 
   const masteredCount = allProgressItems.filter(
     (p) => p.status === "mastered"
@@ -201,15 +207,15 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
         </div>
       </div>
 
-      {/* Review Callout if due items exist */}
-      {weakCount > 0 && (
+      {/* Review Callout if due items exist or items being reinforced */}
+      {dueCount > 0 ? (
         <div className="mb-6 sm:mb-8 p-4 sm:p-5 rounded-2xl bg-neutral-50 dark:bg-[#181818] border-2 border-black dark:border-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <div className="text-xs font-mono-code font-bold text-black dark:text-white uppercase tracking-wider">
-              {weakCount} SENTENCES IN REVIEW QUEUE
+              {dueCount} SENTENCE{dueCount === 1 ? "" : "S"} DUE IN REVIEW QUEUE
             </div>
             <div className="text-xs text-neutral-600 dark:text-neutral-400 font-medium mt-0.5">
-              Reinforce items scheduled for spaced repetition.
+              Ready for immediate memory reinforcement.
             </div>
           </div>
           <button
@@ -219,7 +225,24 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
             Start Review →
           </button>
         </div>
-      )}
+      ) : weakCount > 0 ? (
+        <div className="mb-6 sm:mb-8 p-4 sm:p-5 rounded-2xl bg-neutral-50 dark:bg-[#181818] border border-neutral-300 dark:border-neutral-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <div className="text-xs font-mono-code font-bold text-black dark:text-white uppercase tracking-wider">
+              {weakCount} SENTENCE{weakCount === 1 ? "" : "S"} BEING REINFORCED
+            </div>
+            <div className="text-xs text-neutral-600 dark:text-neutral-400 font-medium mt-0.5">
+              Scheduled according to FSRS intervals. Practice early anytime.
+            </div>
+          </div>
+          <button
+            onClick={onGoToReview}
+            className="w-full sm:w-auto px-5 py-3 rounded-full bg-neutral-200 dark:bg-neutral-800 text-black dark:text-white hover:bg-neutral-300 dark:hover:bg-neutral-700 text-xs font-arial-black uppercase tracking-wider transition-colors cursor-pointer text-center min-h-[44px]"
+          >
+            Review Early →
+          </button>
+        </div>
+      ) : null}
 
       {/* Real CEFR Level Progress */}
       <div className="mb-8">

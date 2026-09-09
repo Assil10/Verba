@@ -124,13 +124,13 @@ Provide a crisp, structured explanation in markdown. Avoid conversational pleasa
 ### 4. Mental Model / Mnemonic
 - One clear rule of thumb or mental shortcut to never get this pattern wrong.`;
 
-    // Timeout safety race: max 7 seconds
+    // Timeout safety race: max 12 seconds
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("AI generation timed out")), 7000)
+      setTimeout(() => reject(new Error("AI generation timed out")), 12000)
     );
 
     const apiPromise = ai.models.generateContent({
-      model: "gemini-3.8-flash",
+      model: "gemini-3.1-flash-lite",
       contents: prompt,
       config: {
         temperature: 0.25,
@@ -200,13 +200,13 @@ Return strict JSON:
   "breakdown": "Brief note on specific grammar or spelling point if applicable."
 }`;
 
-    // 6 second timeout
+    // 10 second timeout
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("AI evaluation timed out")), 6000)
+      setTimeout(() => reject(new Error("AI evaluation timed out")), 10000)
     );
 
     const apiPromise = ai.models.generateContent({
-      model: "gemini-3.8-flash",
+      model: "gemini-3.1-flash-lite",
       contents: prompt,
       config: {
         responseMimeType: "application/json",

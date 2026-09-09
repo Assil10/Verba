@@ -40,50 +40,94 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
   });
 
   const { overdue, weak, dueToday, allDue } = useMemo(() => {
-    return categorizeDueSentences(allSentences, progress.sentenceProgress);
-  }, [allSentences, progress.sentenceProgress]);
+    return categorizeDueSentences(allSentences, progress?.sentenceProgress || {});
+  }, [allSentences, progress?.sentenceProgress]);
 
-  // Empty state: Nothing to review
-  if (allDue.length === 0 && sessionState === "intro") {
-    return (
-      <div className="w-full flex flex-col items-center justify-center min-h-[calc(100vh-180px)] py-12 px-4">
-        <div className="max-w-md w-full text-center bg-white dark:bg-[#121212] border-2 border-black dark:border-white rounded-[2.5rem] p-10 sm:p-12 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.12)] animate-in fade-in duration-200">
-          <div className="w-14 h-14 mx-auto rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center mb-6">
-            <CheckCircle2 className="w-7 h-7 stroke-[2.5]" />
-          </div>
+  // All practiced sentences for early review fallback
+  const practicedSentences = useMemo(() => {
+    const sentenceLookup = new Map<string, SentenceItem>();
+    allSentences.forEach((s) => sentenceLookup.set(s.id, s));
+    const items: SentenceItem[] = [];
+    Object.keys(progress?.sentenceProgress || {}).forEach((id) => {
+      const s = sentenceLookup.get(id);
+      if (s) items.push(s);
+    });
+    return items;
+  }, [allSentences, progress?.sentenceProgress]);
 
-          <h2 className="font-arial-black font-black text-2xl sm:text-3xl text-black dark:text-white tracking-tight uppercase mb-3">
-            NOTHING TO REVIEW
-          </h2>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed mb-8 font-medium">
-            You're completely caught up. All scheduled reviews have been reinforced with memory retention intervals.
-          </p>
+  // Lifecycle safety: stop speech when session index changes, session state changes, or on unmount
+  // CRITICAL: Must be declared at top-level before ANY conditional returns to adhere to React Rules of Hooks!
+  useEffect(() => {
+    return () => {
+      stopSpeaking();
+    };
+  }, [sessionIndex, sessionState]);
 
-          <button
-            id="practice-new-sentences-btn"
-            onClick={onBackToPractice}
-            className="w-full py-4 bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-900 dark:hover:bg-neutral-100 rounded-full font-arial-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
-          >
-            <span>PRACTICE NEW SENTENCES</span>
-            <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Auto-finish if active session queue is exhausted or empty
+  useEffect(() => {
+    if (sessionState === "active" && sessionQueue.length > 0 && sessionIndex >= sessionQueue.length) {
+      setSessionState("complete");
+    }
+  }, [sessionState, sessionIndex, sessionQueue.length]);
 
-  const handleStartReview = () => {
-    setSessionQueue(allDue);
+  const handleStartReview = (queueToUse: SentenceItem[] = allDue) => {
+    if (!queueToUse || queueToUse.length === 0) return;
+    stopSpeaking();
+    setSessionQueue(queueToUse);
     setSessionIndex(0);
     setSessionStats({ again: 0, hard: 0, good: 0, easy: 0, total: 0 });
     setSessionState("active");
   };
 
+  // Empty state: Nothing due for review right now
+  if (allDue.length === 0 && sessionState === "intro") {
+    return (
+      <div className="w-full flex flex-col items-center justify-center min-h-[calc(100vh-180px)] py-8 sm:py-12 px-4">
+        <div className="max-w-md w-full text-center bg-white dark:bg-[#121212] border-2 border-black dark:border-white rounded-2xl sm:rounded-[2.5rem] p-8 sm:p-12 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.12)]">
+          <div className="w-14 h-14 mx-auto rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center mb-6">
+            <CheckCircle2 className="w-7 h-7 stroke-[2.5]" />
+          </div>
+
+          <h2 className="font-arial-black font-black text-2xl sm:text-3xl text-black dark:text-white tracking-tight uppercase mb-3">
+            NOTHING DUE FOR REVIEW
+          </h2>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed mb-6 font-medium">
+            You're completely caught up! All scheduled reviews have been reinforced with memory retention intervals.
+          </p>
+
+          <div className="flex flex-col gap-3">
+            <button
+              id="practice-new-sentences-btn"
+              onClick={() => {
+                stopSpeaking();
+                onBackToPractice();
+              }}
+              className="w-full py-4 bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-900 dark:hover:bg-neutral-100 rounded-full font-arial-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg min-h-[48px]"
+            >
+              <span>PRACTICE NEW SENTENCES</span>
+              <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+            </button>
+
+            {practicedSentences.length > 0 && (
+              <button
+                id="cram-review-anyway-btn"
+                onClick={() => handleStartReview(practicedSentences)}
+                className="w-full py-3.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-black dark:text-white rounded-full font-arial-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer border border-neutral-300 dark:border-neutral-700 min-h-[44px]"
+              >
+                <span>REVIEW PRACTICED ({practicedSentences.length}) ANYWAY</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Intro dashboard before starting review session
   if (sessionState === "intro") {
     return (
       <div className="w-full flex flex-col items-center justify-center min-h-[calc(100vh-180px)] py-6 sm:py-12 px-3 sm:px-4">
-        <div className="max-w-lg w-full bg-white dark:bg-[#121212] border-2 border-black dark:border-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 md:p-12 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.12)] animate-in fade-in duration-200">
+        <div className="max-w-lg w-full bg-white dark:bg-[#121212] border-2 border-black dark:border-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 md:p-12 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.12)]">
           <div className="text-[11px] font-mono-code font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2">
             SPACED REPETITION QUEUE
           </div>
@@ -130,7 +174,7 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
 
           <button
             id="start-review-session-btn"
-            onClick={handleStartReview}
+            onClick={() => handleStartReview(allDue)}
             className="w-full py-4 bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-900 dark:hover:bg-neutral-100 font-arial-black text-xs uppercase tracking-widest rounded-full transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg min-h-[48px]"
           >
             <span>START REVIEW</span>
@@ -145,7 +189,7 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
   if (sessionState === "complete") {
     return (
       <div className="w-full flex flex-col items-center justify-center min-h-[calc(100vh-180px)] py-6 sm:py-12 px-3 sm:px-4">
-        <div className="max-w-md w-full bg-white dark:bg-[#121212] border-2 border-black dark:border-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 md:p-12 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.12)] text-center animate-in fade-in duration-200">
+        <div className="max-w-md w-full bg-white dark:bg-[#121212] border-2 border-black dark:border-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 md:p-12 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.12)] text-center">
           <div className="w-14 h-14 mx-auto rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center mb-6">
             <CheckCircle2 className="w-7 h-7 stroke-[2.5]" />
           </div>
@@ -191,14 +235,29 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
   }
 
   // Active Review Loop
-  const currentSentence = sessionQueue[sessionIndex];
+  const currentSentence: SentenceItem | undefined = sessionQueue[sessionIndex];
 
-  // Lifecycle safety: stop speech when session index changes or unmounts
-  useEffect(() => {
-    return () => {
-      stopSpeaking();
-    };
-  }, [sessionIndex, sessionState]);
+  // Defensive fallback if queue is unexpectedly empty or index out of bounds
+  if (!currentSentence) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center min-h-[calc(100vh-180px)] py-12 px-4">
+        <div className="max-w-md w-full text-center bg-white dark:bg-[#121212] border-2 border-black dark:border-white rounded-2xl p-8 shadow-lg">
+          <p className="text-sm font-bold uppercase mb-4 text-black dark:text-white">
+            Queue Finished or Empty
+          </p>
+          <button
+            onClick={() => {
+              stopSpeaking();
+              setSessionState("complete");
+            }}
+            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-arial-black text-xs uppercase tracking-wider cursor-pointer"
+          >
+            View Summary
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleRate = (
     rating: Rating,
@@ -211,7 +270,7 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
 
     setSessionStats((prev) => ({
       ...prev,
-      [rating]: prev[rating] + 1,
+      [rating]: (prev[rating] || 0) + 1,
       total: prev.total + 1,
     }));
 
@@ -257,8 +316,9 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
       </div>
 
       <PracticeCard
+        key={`review-${currentSentence.id}-${settings.direction}`}
         sentence={currentSentence}
-        cardProgress={progress.sentenceProgress[currentSentence.id]}
+        cardProgress={progress?.sentenceProgress?.[currentSentence.id]}
         settings={settings}
         onRate={handleRate}
         onFlipDirection={onFlipDirection}
