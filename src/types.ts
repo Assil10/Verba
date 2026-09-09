@@ -178,6 +178,8 @@ export interface UserProgress {
   history: ReviewLog[];
 }
 
+export type TTSVoicePreference = "default" | "male" | "female";
+
 export interface AppSettings {
   direction: Direction;
   level: CEFRLevel;
@@ -186,6 +188,7 @@ export interface AppSettings {
   themeMode: "dark" | "editorial";
   audioSpeed: number;
   autoSpeak: boolean;
+  ttsVoicePreference?: TTSVoicePreference;
   selectedVoiceName?: string;
   dailyGoal: number; // 10, 20, 30, 50
 }

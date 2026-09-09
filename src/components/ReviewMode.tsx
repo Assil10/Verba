@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { CheckCircle2, ArrowRight, RotateCcw, AlertTriangle, Calendar } from "lucide-react";
 import { AppSettings, Rating, SentenceItem, UserProgress } from "../types";
 import { categorizeDueSentences } from "../services/srsEngine";
+import { stopSpeaking } from "../utils/sound";
 import { PracticeCard } from "./PracticeCard";
 
 interface ReviewModeProps {
@@ -176,7 +177,10 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
           </div>
 
           <button
-            onClick={onBackToPractice}
+            onClick={() => {
+              stopSpeaking();
+              onBackToPractice();
+            }}
             className="w-full py-4 bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-900 dark:hover:bg-neutral-100 rounded-full font-arial-black text-xs uppercase tracking-widest transition-all cursor-pointer shadow-lg min-h-[48px]"
           >
             Back to Practice
@@ -189,12 +193,20 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
   // Active Review Loop
   const currentSentence = sessionQueue[sessionIndex];
 
+  // Lifecycle safety: stop speech when session index changes or unmounts
+  useEffect(() => {
+    return () => {
+      stopSpeaking();
+    };
+  }, [sessionIndex, sessionState]);
+
   const handleRate = (
     rating: Rating,
     timeSpentMs: number,
     typedAnswer?: string,
     isCorrect?: boolean
   ) => {
+    stopSpeaking();
     onRateSentence(currentSentence.id, rating, timeSpentMs, typedAnswer, isCorrect);
 
     setSessionStats((prev) => ({
@@ -211,6 +223,7 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
   };
 
   const handleNextCard = () => {
+    stopSpeaking();
     if (sessionIndex + 1 < sessionQueue.length) {
       setSessionIndex((prev) => prev + 1);
     } else {
@@ -233,7 +246,10 @@ export const ReviewMode: React.FC<ReviewModeProps> = ({
         </div>
 
         <button
-          onClick={() => setSessionState("complete")}
+          onClick={() => {
+            stopSpeaking();
+            setSessionState("complete");
+          }}
           className="text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white uppercase tracking-wider underline underline-offset-4 transition-colors cursor-pointer min-h-[40px] flex items-center"
         >
           End Session

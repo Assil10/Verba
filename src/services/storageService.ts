@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   themeMode: "dark",
   audioSpeed: 0.95,
   autoSpeak: true,
+  ttsVoicePreference: "default",
   dailyGoal: 20,
 };
 
@@ -163,9 +164,16 @@ class LocalStorageService implements IStorageService {
     if (typeof window === "undefined") return DEFAULT_SETTINGS;
     try {
       const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (!raw) return DEFAULT_SETTINGS;
+      const directVoicePref = localStorage.getItem("ttsVoicePreference") as "default" | "male" | "female" | null;
+      if (!raw) {
+        return directVoicePref ? { ...DEFAULT_SETTINGS, ttsVoicePreference: directVoicePref } : DEFAULT_SETTINGS;
+      }
       const parsed = JSON.parse(raw);
-      return { ...DEFAULT_SETTINGS, ...parsed };
+      const merged = { ...DEFAULT_SETTINGS, ...parsed };
+      if (directVoicePref && !parsed.ttsVoicePreference) {
+        merged.ttsVoicePreference = directVoicePref;
+      }
+      return merged;
     } catch {
       return DEFAULT_SETTINGS;
     }
@@ -175,6 +183,9 @@ class LocalStorageService implements IStorageService {
     if (typeof window === "undefined") return;
     try {
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+      if (settings.ttsVoicePreference) {
+        localStorage.setItem("ttsVoicePreference", settings.ttsVoicePreference);
+      }
       document.documentElement.setAttribute("data-theme", settings.themeMode);
     } catch (e) {
       console.error("StorageService: failed to save settings", e);

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Download, Upload, AlertTriangle, Moon, Sun } from "lucide-react";
-import { AppSettings } from "../types";
+import { X, Download, Upload, AlertTriangle, Moon, Sun, Volume2 } from "lucide-react";
+import { AppSettings, TTSVoicePreference } from "../types";
 import { CEFR_LEVELS } from "../data/languages";
-import { getAvailableVoices, AvailableVoice } from "../utils/sound";
+import { getAvailableVoices, AvailableVoice, previewVoice, stopSpeaking } from "../utils/sound";
 import { storageService } from "../services/storageService";
 
 interface SettingsModalProps {
@@ -78,12 +78,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleLoadDemo = () => {
     storageService.loadDemoData();
     onDataResetOrImported();
+    stopSpeaking();
+    onClose();
+  };
+
+  const handleClose = () => {
+    stopSpeaking();
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
-      <div className="bg-white dark:bg-[#121212] border-2 border-black dark:border-white rounded-2xl sm:rounded-[2rem] max-w-lg w-full p-5 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto text-black dark:text-white">
+    <div
+      onClick={handleClose}
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white dark:bg-[#121212] border-2 border-black dark:border-white rounded-2xl sm:rounded-[2rem] max-w-lg w-full p-5 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto text-black dark:text-white"
+      >
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-neutral-200 dark:border-neutral-800 mb-6">
           <div>
@@ -95,7 +107,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center"
             aria-label="Close settings"
           >
@@ -231,25 +243,83 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             />
           </div>
 
-          {voices.length > 0 && (
-            <div>
-              <label className="block text-neutral-500 dark:text-neutral-400 uppercase tracking-widest font-bold mb-2">
-                Preferred Voice (TTS)
+          {/* German Voice Preference & Test Voice */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-neutral-500 dark:text-neutral-400 uppercase tracking-widest font-bold">
+                German Voice
               </label>
-              <select
-                value={settings.selectedVoiceName || ""}
-                onChange={(e) => onUpdateSettings({ selectedVoiceName: e.target.value || undefined })}
-                className="w-full px-3 py-2.5 bg-white dark:bg-[#1A1A1A] border-2 border-black dark:border-neutral-300 rounded-xl text-black dark:text-white focus:outline-none font-bold text-xs"
+              <button
+                type="button"
+                onClick={() => previewVoice(settings.ttsVoicePreference, settings.audioSpeed, settings.selectedVoiceName)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-neutral-100 dark:bg-[#202020] hover:bg-neutral-200 dark:hover:bg-[#2A2A2A] text-black dark:text-white rounded-lg text-xs font-mono-code font-bold transition-colors cursor-pointer"
+                title="Test current voice"
               >
-                <option value="">System Default</option>
-                {voices.map((v) => (
-                  <option key={v.name} value={v.name}>
-                    {v.name} ({v.lang})
-                  </option>
-                ))}
-              </select>
+                <Volume2 className="w-3.5 h-3.5" />
+                <span>Test voice</span>
+              </button>
             </div>
-          )}
+
+            {/* Segmented Voice Preference Selector */}
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              {(["default", "male", "female"] as const).map((pref) => {
+                const isSelected = (settings.ttsVoicePreference || "default") === pref;
+                return (
+                  <button
+                    key={pref}
+                    type="button"
+                    onClick={() => {
+                      stopSpeaking();
+                      onUpdateSettings({ ttsVoicePreference: pref, selectedVoiceName: undefined });
+                      previewVoice(pref, settings.audioSpeed);
+                    }}
+                    className={`py-2 px-1 rounded-xl text-center border-2 transition-all cursor-pointer font-bold capitalize text-xs ${
+                      isSelected
+                        ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white"
+                        : "border-neutral-200 dark:border-neutral-800 text-black dark:text-white hover:border-black dark:hover:border-white"
+                    }`}
+                  >
+                    <div>{pref}</div>
+                    {pref === "male" && <div className="text-[9px] font-normal opacity-70">Deep</div>}
+                    {pref === "female" && <div className="text-[9px] font-normal opacity-70">Bright</div>}
+                    {pref === "default" && <div className="text-[9px] font-normal opacity-70">System</div>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {voices.length > 0 && (
+              <div className="mt-2.5">
+                <select
+                  value={settings.selectedVoiceName || ""}
+                  onChange={(e) => {
+                    stopSpeaking();
+                    const val = e.target.value || undefined;
+                    const matched = voices.find((v) => v.name === val);
+                    const detectedPref = matched?.detectedGender || "default";
+                    onUpdateSettings({
+                      selectedVoiceName: val,
+                      ttsVoicePreference: val ? detectedPref : settings.ttsVoicePreference,
+                    });
+                    previewVoice(val ? detectedPref : settings.ttsVoicePreference, settings.audioSpeed, val);
+                  }}
+                  className="w-full px-3 py-2 bg-neutral-50 dark:bg-[#1A1A1A] border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-800 dark:text-neutral-200 focus:outline-none font-medium text-xs cursor-pointer"
+                  title="Specific system voice (optional override)"
+                >
+                  <option value="">Auto-select based on preference</option>
+                  {voices.map((v) => (
+                    <option key={v.name} value={v.name}>
+                      {v.name} ({v.lang}) {v.detectedGender ? `[${v.detectedGender}]` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <p className="text-[11px] text-neutral-400 dark:text-neutral-500 font-sans mt-2">
+              Voice availability depends on your device and browser.
+            </p>
+          </div>
 
           {/* Typing Mode Toggle */}
           <div className="flex items-center justify-between p-4 rounded-2xl bg-neutral-50 dark:bg-[#181818] border border-neutral-200 dark:border-neutral-800">

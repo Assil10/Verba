@@ -11,7 +11,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { AppSettings, Rating, SentenceItem, TypingEvaluationResult, UserSentenceProgress } from "../types";
-import { speakText, playSubtleClick } from "../utils/sound";
+import { speakText, playSubtleClick, stopSpeaking, subscribeSpeechState } from "../utils/sound";
 import { evaluateUserTyping } from "../services/typingEvaluator";
 import { getFSRSIntervalsPreview } from "../services/srsEngine";
 import { getSentenceGrammarAnalysis } from "../services/grammarAnalyzer";
@@ -63,6 +63,20 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
   const answerLangName = isEnToDe ? "GERMAN" : "ENGLISH";
   const answerVoiceCode = isEnToDe ? "de-DE" : "en-US";
 
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // Subscribe to centralized speech synthesis state
+  useEffect(() => {
+    return subscribeSpeechState(setIsSpeaking);
+  }, []);
+
+  // Lifecycle safety: cancel speech on unmount or when sentence / direction changes
+  useEffect(() => {
+    return () => {
+      stopSpeaking();
+    };
+  }, [sentence.id, settings.direction]);
+
   useEffect(() => {
     setIsRevealed(false);
     setTypedInput("");
@@ -84,7 +98,13 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
     inputRef.current?.blur();
 
     if (settings.autoSpeak) {
-      speakText(answerText, answerVoiceCode, settings.audioSpeed, settings.selectedVoiceName);
+      speakText(
+        answerText,
+        answerVoiceCode,
+        settings.audioSpeed,
+        settings.ttsVoicePreference,
+        settings.selectedVoiceName
+      );
     }
 
     if (settings.typingMode && typedInput.trim()) {
@@ -104,11 +124,14 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
   };
 
   const handleToggleFlip = () => {
+    stopSpeaking();
     playSubtleClick("flip");
     setIsRevealed((prev) => !prev);
   };
 
   const handleRate = (rating: Rating) => {
+    // CRITICAL: Stop previous sentence speech immediately before rating and selecting next sentence
+    stopSpeaking();
     playSubtleClick("rate");
     const elapsed = Date.now() - startTimeRef.current;
     onRate(rating, elapsed, typedInput, evalResult?.isCorrect);
@@ -166,6 +189,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
           handleReveal();
         } else if (key === "n") {
           e.preventDefault();
+          stopSpeaking();
           onNextCard?.();
         } else if (key === "t") {
           e.preventDefault();
@@ -183,10 +207,17 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
           handleFetchAiExplanation();
         } else if (key === "f") {
           e.preventDefault();
+          stopSpeaking();
           onFlipDirection();
         } else if (key === "p") {
           e.preventDefault();
-          speakText(promptText, promptVoiceCode, settings.audioSpeed, settings.selectedVoiceName);
+          speakText(
+            promptText,
+            promptVoiceCode,
+            settings.audioSpeed,
+            settings.ttsVoicePreference,
+            settings.selectedVoiceName
+          );
         }
       } else {
         // When revealed:
@@ -208,6 +239,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
           handleToggleFlip();
         } else if (key === "n") {
           e.preventDefault();
+          stopSpeaking();
           onNextCard?.();
         } else if (key === "t") {
           e.preventDefault();
@@ -221,9 +253,16 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
           handleFetchAiExplanation();
         } else if (key === "p") {
           e.preventDefault();
-          speakText(answerText, answerVoiceCode, settings.audioSpeed, settings.selectedVoiceName);
+          speakText(
+            answerText,
+            answerVoiceCode,
+            settings.audioSpeed,
+            settings.ttsVoicePreference,
+            settings.selectedVoiceName
+          );
         } else if (key === "f") {
           e.preventDefault();
+          stopSpeaking();
           onFlipDirection();
         } else if (e.key === "Escape") {
           e.preventDefault();
@@ -309,10 +348,13 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
                     isRevealed ? answerText : promptText,
                     isRevealed ? answerVoiceCode : promptVoiceCode,
                     settings.audioSpeed,
+                    settings.ttsVoicePreference,
                     settings.selectedVoiceName
                   )
                 }
-                className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors cursor-pointer"
+                className={`p-2 min-h-[36px] min-w-[36px] flex items-center justify-center text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors cursor-pointer ${
+                  isSpeaking ? "ring-2 ring-black dark:ring-white animate-pulse" : ""
+                }`}
                 title="Pronounce Sentence (P)"
               >
                 <Volume2 className="w-4 h-4 stroke-[2.2]" />
@@ -389,6 +431,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
                           promptText,
                           promptVoiceCode,
                           settings.audioSpeed,
+                          settings.ttsVoicePreference,
                           settings.selectedVoiceName
                         )
                       }
@@ -416,6 +459,7 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
                           answerText,
                           answerVoiceCode,
                           settings.audioSpeed,
+                          settings.ttsVoicePreference,
                           settings.selectedVoiceName
                         )
                       }
@@ -573,7 +617,10 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
         {/* Footer Shortcut Strip: Standardized shortcut badges (F, P, T, N) with uniform touch targets and responsive flex */}
         <div className="mt-5 sm:mt-8 flex flex-wrap items-center justify-center sm:justify-between gap-1.5 sm:gap-2.5 w-full px-1 sm:px-4 text-xs font-mono-code font-bold text-black dark:text-white">
           <button
-            onClick={onFlipDirection}
+            onClick={() => {
+              stopSpeaking();
+              onFlipDirection();
+            }}
             className="group flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer text-black dark:text-white min-h-[44px]"
             title="Flip Direction (F)"
           >
@@ -591,10 +638,13 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
                   isRevealed ? answerText : promptText,
                   isRevealed ? answerVoiceCode : promptVoiceCode,
                   settings.audioSpeed,
+                  settings.ttsVoicePreference,
                   settings.selectedVoiceName
                 )
               }
-              className="group flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer text-black dark:text-white min-h-[44px]"
+              className={`group flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer text-black dark:text-white min-h-[44px] ${
+                isSpeaking ? "ring-2 ring-black dark:ring-white" : ""
+              }`}
               title="Pronounce Sentence (P)"
             >
               <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
@@ -634,7 +684,10 @@ export const PracticeCard: React.FC<PracticeCardProps> = ({
 
             {onNextCard && (
               <button
-                onClick={onNextCard}
+                onClick={() => {
+                  stopSpeaking();
+                  onNextCard();
+                }}
                 className="group flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer text-black dark:text-white min-h-[44px]"
                 title="Next Card (N)"
               >

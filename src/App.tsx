@@ -4,7 +4,7 @@ import { SENTENCE_DATABASE } from "./data/sentences";
 import { storageService } from "./services/storageService";
 import { selectNextSentence } from "./services/selectionEngine";
 import { categorizeDueSentences } from "./services/srsEngine";
-import { playSubtleClick } from "./utils/sound";
+import { playSubtleClick, stopSpeaking } from "./utils/sound";
 import { Header } from "./components/Header";
 import { PracticeCard } from "./components/PracticeCard";
 import { ReviewMode } from "./components/ReviewMode";
@@ -52,6 +52,7 @@ export default function App() {
   // Function to transition to the next sentence using SRS weights
   const advanceToNextSentence = useCallback(
     (updatedProgress?: UserProgress) => {
+      stopSpeaking();
       const p = updatedProgress || progress;
       const next = selectNextSentence(
         SENTENCE_DATABASE,
@@ -68,6 +69,9 @@ export default function App() {
 
   // When user changes CEFR level or topic in Settings/Header, update current sentence
   const handleUpdateSettings = (newPartial: Partial<AppSettings>) => {
+    if (newPartial.level || newPartial.topic || newPartial.direction) {
+      stopSpeaking();
+    }
     const updated = { ...settings, ...newPartial };
     setSettings(updated);
     storageService.saveSettings(updated);
@@ -91,6 +95,7 @@ export default function App() {
   };
 
   const handleFlipDirection = () => {
+    stopSpeaking();
     playSubtleClick("flip");
     const newDir: Direction = settings.direction === "en-de" ? "de-en" : "en-de";
     handleUpdateSettings({ direction: newDir });
@@ -102,6 +107,7 @@ export default function App() {
     typedAnswer?: string,
     isCorrect?: boolean
   ) => {
+    stopSpeaking();
     const updated = storageService.recordReview(
       currentSentence.id,
       rating,
@@ -115,6 +121,7 @@ export default function App() {
   };
 
   const handleNextCard = () => {
+    stopSpeaking();
     playSubtleClick("click");
     advanceToNextSentence(progress);
   };
@@ -126,6 +133,7 @@ export default function App() {
     typedAnswer?: string,
     isCorrect?: boolean
   ) => {
+    stopSpeaking();
     const updated = storageService.recordReview(
       sentenceId,
       rating,
@@ -135,6 +143,11 @@ export default function App() {
       isCorrect
     );
     setProgress(updated);
+  };
+
+  const handleTabChange = (tab: "practice" | "review" | "progress") => {
+    stopSpeaking();
+    setCurrentTab(tab);
   };
 
   const handleDataResetOrImported = () => {
@@ -170,7 +183,7 @@ export default function App() {
       {/* Persistent Minimal Header */}
       <Header
         currentTab={currentTab}
-        onTabChange={(tab) => setCurrentTab(tab)}
+        onTabChange={handleTabChange}
         settings={settings}
         onSettingsChange={handleUpdateSettings}
         onFlipDirection={handleFlipDirection}
@@ -204,7 +217,7 @@ export default function App() {
             settings={settings}
             onRateSentence={handleReviewRateSentence}
             onFlipDirection={handleFlipDirection}
-            onBackToPractice={() => setCurrentTab("practice")}
+            onBackToPractice={() => handleTabChange("practice")}
           />
         )}
 
@@ -213,8 +226,8 @@ export default function App() {
             progress={progress}
             settings={settings}
             allSentences={SENTENCE_DATABASE}
-            onStartPracticing={() => setCurrentTab("practice")}
-            onGoToReview={() => setCurrentTab("review")}
+            onStartPracticing={() => handleTabChange("practice")}
+            onGoToReview={() => handleTabChange("review")}
           />
         )}
       </main>
