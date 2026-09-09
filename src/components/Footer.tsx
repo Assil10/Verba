@@ -16,7 +16,7 @@ export const Footer: React.FC<FooterProps> = () => {
   const [feedbackMessage, setFeedbackMessage] = useState("");
 
   const handleCopyEmail = () => {
-    navigator.clipboard.writeText("contact@verba.app");
+    navigator.clipboard.writeText("khaldi.assil40@gmail.com");
     setCopiedEmail(true);
     setTimeout(() => setCopiedEmail(false), 2000);
   };
@@ -52,28 +52,18 @@ export const Footer: React.FC<FooterProps> = () => {
               <span>// CONTACT</span>
             </button>
 
+          
+
             {/* INSTAGRAM */}
             <a
               id="footer-instagram-link"
-              href="https://instagram.com"
+              href="https://www.instagram.com/khaldi_assil/"
               target="_blank"
               rel="noopener noreferrer"
               className="py-1 px-1.5 text-neutral-400 dark:text-neutral-600 hover:text-white dark:hover:text-black transition-colors cursor-pointer focus:outline-none focus:underline"
-              title="Visit Verba on Instagram"
+              title="Visit Instagram (@khaldi_assil)"
             >
               INSTAGRAM
-            </a>
-
-            {/* TIKTOK */}
-            <a
-              id="footer-tiktok-link"
-              href="https://tiktok.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="py-1 px-1.5 text-neutral-400 dark:text-neutral-600 hover:text-white dark:hover:text-black transition-colors cursor-pointer focus:outline-none focus:underline"
-              title="Visit Verba on TikTok"
-            >
-              TIKTOK
             </a>
 
             {/* IMPRESSUM */}
@@ -172,7 +162,7 @@ export const Footer: React.FC<FooterProps> = () => {
                     <div className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase tracking-widest font-bold">
                       Direct Inquiries
                     </div>
-                    <div className="font-bold text-sm text-black dark:text-white">contact@verba.app</div>
+                    <div className="font-bold text-sm text-black dark:text-white">khaldi.assil40@gmail.com</div>
                   </div>
                   <button
                     onClick={handleCopyEmail}
@@ -234,24 +224,24 @@ export const Footer: React.FC<FooterProps> = () => {
 
                 {/* Social Quick-Links */}
                 <div className="pt-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
-                  <span>Community channels:</span>
+                  <span>Direct links:</span>
                   <div className="flex gap-4 font-bold text-black dark:text-white">
                     <a
-                      href="https://instagram.com"
+                      href="https://verba-sigma-mocha.vercel.app/"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="hover:underline flex items-center gap-1"
                     >
-                      <span>IG</span>
+                      <span>Web</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                     <a
-                      href="https://tiktok.com"
+                      href="https://www.instagram.com/khaldi_assil/"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="hover:underline flex items-center gap-1"
                     >
-                      <span>TT</span>
+                      <span>Instagram</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
@@ -268,13 +258,40 @@ export const Footer: React.FC<FooterProps> = () => {
                 <div>
                   <p className="font-bold text-black dark:text-white text-sm">Verba Language Systems</p>
                   <p className="text-neutral-500 dark:text-neutral-400 font-mono-code mt-0.5">Project: Verba</p>
-                  <p className="text-neutral-500 dark:text-neutral-400 font-mono-code">Berlin &amp; Global Remote Lab</p>
+                  <p className="text-neutral-500 dark:text-neutral-400 font-mono-code">Location: Remote / Global</p>
                 </div>
 
-                <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800">
-                  <p className="font-bold text-black dark:text-white mb-1 font-mono-code text-xs">CONTACT</p>
-                  <p className="text-neutral-500 dark:text-neutral-400 font-mono-code">E-Mail: contact@verba.app</p>
-                  <p className="text-neutral-500 dark:text-neutral-400 font-mono-code">Web: https://verba.app</p>
+                <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800 space-y-1">
+                  <p className="font-bold text-black dark:text-white mb-1 font-mono-code text-xs">CONTACT &amp; LINKS</p>
+                  <p className="text-neutral-500 dark:text-neutral-400 font-mono-code">
+                    E-Mail:{" "}
+                    <a href="mailto:khaldi.assil40@gmail.com" className="underline hover:text-black dark:hover:text-white">
+                      khaldi.assil40@gmail.com
+                    </a>
+                  </p>
+                  <p className="text-neutral-500 dark:text-neutral-400 font-mono-code">
+                    Web:{" "}
+                    <a
+                      href="https://verba-sigma-mocha.vercel.app/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-black dark:hover:text-white"
+                    >
+                      https://verba-sigma-mocha.vercel.app/
+                    </a>
+                  </p>
+                  <p className="text-neutral-500 dark:text-neutral-400 font-mono-code">
+                    Instagram:{" "}
+                    <a
+                      href="https://www.instagram.com/khaldi_assil/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-black dark:hover:text-white"
+                    >
+                      @khaldi_assil
+                    </a>
+                  </p>
+                  <p className="text-neutral-500 dark:text-neutral-400 font-mono-code">Location: Remote / Global</p>
                 </div>
 
                 <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800">
